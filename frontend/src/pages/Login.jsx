@@ -4,8 +4,8 @@ import { AuthContext } from '../context/AuthContext';
 import { LogIn, Mail, Lock, ShieldAlert, Sparkles } from 'lucide-react';
 
 const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('demo@smartstore.com');
+  const [password, setPassword] = useState('demopass123');
   const [localError, setLocalError] = useState('');
   const { login, user, error, setError, loading } = useContext(AuthContext);
   const navigate = useNavigate();

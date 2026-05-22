@@ -137,8 +137,12 @@ router.delete('/:id', protect, async (req, res) => {
       return res.status(404).json({ message: 'Product not found' });
     }
 
+    // Cascade delete: remove all sales associated with this product
+    const Sale = require('../models/Sale');
+    await Sale.deleteMany({ product: req.params.id, user: req.user._id });
+
     await Product.deleteOne({ _id: req.params.id });
-    res.json({ message: 'Product removed' });
+    res.json({ message: 'Product and its sales records removed' });
   } catch (error) {
     console.error('Error deleting product:', error.message);
     if (error.kind === 'ObjectId') {

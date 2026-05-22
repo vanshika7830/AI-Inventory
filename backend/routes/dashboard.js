@@ -62,28 +62,72 @@ router.get('/stats', protect, async (req, res) => {
       },
     ]);
 
-    // 3. Monthly Sales (Revenue over time)
-    const monthlyStats = await Sale.aggregate([
-      { $match: { user: userId } },
+    // 3. Daily Sales (Revenue over specific month or last 30 days)
+    const targetMonth = req.query.month ? parseInt(req.query.month) : null;
+    const targetYear = req.query.year ? parseInt(req.query.year) : null;
+
+    let startDate, endDate;
+    let isSpecificMonth = false;
+    let daysInMonth = 30;
+
+    if (targetMonth && targetYear) {
+      isSpecificMonth = true;
+      startDate = new Date(targetYear, targetMonth - 1, 1);
+      endDate = new Date(targetYear, targetMonth, 0); // last day of the month
+      endDate.setHours(23, 59, 59, 999);
+      daysInMonth = endDate.getDate();
+    } else {
+      startDate = new Date();
+      startDate.setDate(startDate.getDate() - 30);
+      endDate = new Date();
+    }
+    
+    const dailyStats = await Sale.aggregate([
+      { $match: { user: userId, date: { $gte: startDate, $lte: endDate } } },
       {
         $group: {
           _id: {
             year: { $year: '$date' },
             month: { $month: '$date' },
+            day: { $dayOfMonth: '$date' }
           },
           revenue: { $sum: '$revenue' },
           salesCount: { $sum: 1 },
         },
       },
-      { $sort: { '_id.year': 1, '_id.month': 1 } },
     ]);
 
     const monthNames = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const monthlySalesFormatted = monthlyStats.map((item) => ({
-      month: `${monthNames[item._id.month]} ${item._id.year}`,
-      revenue: item.revenue,
-      salesCount: item.salesCount,
-    }));
+    
+    // Fill in missing days to ensure a continuous fluctuating graph
+    const daysMap = new Map();
+    if (isSpecificMonth) {
+      for (let i = 1; i <= daysInMonth; i++) {
+        const d = new Date(targetYear, targetMonth - 1, i);
+        const key = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+        const label = `${monthNames[d.getMonth() + 1]} ${d.getDate()}`;
+        daysMap.set(key, { month: label, revenue: 0, salesCount: 0 });
+      }
+    } else {
+      for (let i = 29; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const key = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+        const label = `${monthNames[d.getMonth() + 1]} ${d.getDate()}`;
+        daysMap.set(key, { month: label, revenue: 0, salesCount: 0 });
+      }
+    }
+
+    dailyStats.forEach((item) => {
+      const key = `${item._id.year}-${item._id.month}-${item._id.day}`;
+      if (daysMap.has(key)) {
+        const obj = daysMap.get(key);
+        obj.revenue = item.revenue;
+        obj.salesCount = item.salesCount;
+      }
+    });
+
+    const monthlySalesFormatted = Array.from(daysMap.values());
 
     // 4. Low Stock Count (Stock < 10)
     const lowStockCount = await Product.countDocuments({ user: userId, stock: { $lt: 10 } });
@@ -170,6 +214,35 @@ router.post('/sale', protect, async (req, res) => {
   } catch (error) {
     console.error('Error recording sale:', error);
     res.status(500).json({ message: 'Server error recording sale' });
+  }
+});
+
+// @desc    Delete a sale and restore stock
+// @route   DELETE /api/dashboard/sale/:id
+// @access  Private
+router.delete('/sale/:id', protect, async (req, res) => {
+  try {
+    const sale = await Sale.findOne({ _id: req.params.id, user: req.user._id });
+
+    if (!sale) {
+      return res.status(404).json({ message: 'Sale not found' });
+    }
+
+    // Find the associated product to restore stock
+    const product = await Product.findOne({ _id: sale.product, user: req.user._id });
+    if (product) {
+      product.stock += sale.quantity;
+      await product.save();
+    }
+
+    await Sale.deleteOne({ _id: req.params.id });
+    res.json({ message: 'Sale deleted and stock restored' });
+  } catch (error) {
+    console.error('Error deleting sale:', error.message);
+    if (error.kind === 'ObjectId') {
+      return res.status(404).json({ message: 'Sale not found' });
+    }
+    res.status(500).json({ message: 'Server error deleting sale' });
   }
 });
 

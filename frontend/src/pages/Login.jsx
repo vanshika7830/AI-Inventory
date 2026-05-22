@@ -4,11 +4,12 @@ import { AuthContext } from '../context/AuthContext';
 import { LogIn, Mail, Lock, ShieldAlert, Sparkles } from 'lucide-react';
 
 const Login = () => {
-  const [email, setEmail] = useState('demo@smartstore.com');
-  const [password, setPassword] = useState('demopass123');
+  const [email, setEmail] = useState('demo@example.com');
+  const [password, setPassword] = useState('password123');
   const [localError, setLocalError] = useState('');
   const { login, user, error, setError, loading } = useContext(AuthContext);
   const navigate = useNavigate();
+
 
   useEffect(() => {
     // Clear errors when mounting
@@ -23,7 +24,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLocalError('');
-    
+
     if (!email || !password) {
       setLocalError('Please fill in all fields');
       return;

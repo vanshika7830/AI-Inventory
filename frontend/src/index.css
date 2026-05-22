@@ -1,0 +1,173 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    font-family: 'Inter', sans-serif;
+    @apply bg-gray-50 text-gray-900 dark:bg-dark-900 dark:text-gray-100 overflow-x-hidden;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Outfit', sans-serif;
+  }
+}
+
+/* Premium Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100 dark:bg-dark-900;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 dark:bg-dark-700 rounded-full hover:bg-brand;
+}
+
+/* Glassmorphism utility */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+.dark .glass-panel {
+  background: rgba(17, 24, 39, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(243, 244, 246, 0.9) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.dark .glass-card {
+  background: linear-gradient(135deg, rgba(31, 41, 55, 0.5) 0%, rgba(17, 24, 39, 0.7) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: none;
+}
+
+.glass-input {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  color: #111827;
+  transition: all 0.2s ease-in-out;
+}
+.dark .glass-input {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.glass-input:focus {
+  border-color: #8B5CF6;
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+  outline: none;
+}
+
+/* Glowing animations */
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Aurora Glow Spots */
+.glow-spot-purple {
+  background: radial-gradient(circle, rgba(109, 40, 217, 0.15) 0%, rgba(0,0,0,0) 70%);
+}
+.dark .glow-spot-purple {
+  background: radial-gradient(circle, rgba(109, 40, 217, 0.3) 0%, rgba(0,0,0,0) 70%);
+}
+
+.glow-spot-blue {
+  background: radial-gradient(circle, rgba(29, 78, 216, 0.1) 0%, rgba(0,0,0,0) 70%);
+}
+.dark .glow-spot-blue {
+  background: radial-gradient(circle, rgba(29, 78, 216, 0.2) 0%, rgba(0,0,0,0) 70%);
+}
+
+/* Slide In Animation */
+@keyframes slide-in {
+  from {
+    transform: translateY(1rem);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in {
+  animation: slide-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Slide Left (Drawer) Animation */
+@keyframes slide-left {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-left {
+  animation: slide-left 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+
+/* Ensure browser native select/dropdown menus render in dark/light mode */
+select,
+.glass-input select {
+  color-scheme: light !important;
+}
+
+.dark select,
+.dark .glass-input select {
+  color-scheme: dark !important;
+}
+
+/* Select Option Dark/Light Theme Fixes */
+select option,
+.glass-input option {
+  background-color: #ffffff !important;
+  color: #111827 !important;
+}
+
+.dark select option,
+.dark .glass-input option {
+  background-color: #1f2937 !important; /* solid slate/gray background */
+  color: #ffffff !important;
+}
+
+/* Global Dark Mode Grey Text Readability Fallback Overrides */
+@layer base {
+  .dark .text-gray-400 {
+    color: #9ca3af; /* Lighter secondary text in dark mode */
+  }
+  .dark .text-gray-500 {
+    color: #cbd5e1; /* High contrast body/label gray in dark mode */
+  }
+  .dark .text-gray-600 {
+    color: #f3f4f6; /* Max visibility text */
+  }
+}
+
+

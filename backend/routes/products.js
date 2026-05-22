@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Product = require('../models/Product');
+const Notification = require('../models/Notification');
 const { protect } = require('../middleware/auth');
 
 // @desc    Get all products for the logged in user
@@ -59,6 +60,23 @@ router.post('/', protect, async (req, res) => {
     });
 
     const savedProduct = await product.save();
+
+    // Create success notification
+    await Notification.create({
+      user: req.user._id,
+      type: 'success',
+      message: `Product "${name}" successfully added to inventory.`,
+    });
+
+    // Check low stock warning
+    if (stock < 10) {
+      await Notification.create({
+        user: req.user._id,
+        type: 'warning',
+        message: `Warning: "${name}" has low stock (${stock} left)!`,
+      });
+    }
+
     res.status(201).json(savedProduct);
   } catch (error) {
     console.error('Error creating product:', error.message);
@@ -88,6 +106,16 @@ router.put('/:id', protect, async (req, res) => {
     product.tags = tags !== undefined ? tags : product.tags;
 
     const updatedProduct = await product.save();
+
+    // Trigger low stock warning if updated stock is low
+    if (stock !== undefined && stock < 10) {
+      await Notification.create({
+        user: req.user._id,
+        type: 'warning',
+        message: `Warning: "${product.name}" has low stock (${product.stock} left) after update!`,
+      });
+    }
+
     res.json(updatedProduct);
   } catch (error) {
     console.error('Error updating product:', error.message);

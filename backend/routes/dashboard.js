@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Sale = require('../models/Sale');
 const Product = require('../models/Product');
+const Notification = require('../models/Notification');
 const { protect } = require('../middleware/auth');
 
 // @desc    Get dashboard statistics
@@ -90,6 +91,12 @@ router.get('/stats', protect, async (req, res) => {
     // 5. Total Active Products
     const totalProducts = await Product.countDocuments({ user: userId });
 
+    // 6. Recent Sales Transactions (last 5)
+    const recentSales = await Sale.find({ user: userId })
+      .sort({ date: -1 })
+      .limit(5)
+      .populate('product', 'name price');
+
     res.json({
       summary: {
         totalRevenue,
@@ -100,6 +107,7 @@ router.get('/stats', protect, async (req, res) => {
       },
       topProducts,
       monthlySales: monthlySalesFormatted,
+      recentSales,
     });
   } catch (error) {
     console.error('Error fetching dashboard stats:', error);
@@ -141,6 +149,23 @@ router.post('/sale', protect, async (req, res) => {
     });
 
     const savedSale = await sale.save();
+
+    // Create sale recorded notification
+    await Notification.create({
+      user: req.user._id,
+      type: 'success',
+      message: `Recorded sale of ${quantity} units of "${product.name}" for $${revenue.toLocaleString()}.`,
+    });
+
+    // Check low stock warning
+    if (product.stock < 10) {
+      await Notification.create({
+        user: req.user._id,
+        type: 'warning',
+        message: `Warning: "${product.name}" has low stock (${product.stock} left) after sale!`,
+      });
+    }
+
     res.status(201).json(savedSale);
   } catch (error) {
     console.error('Error recording sale:', error);

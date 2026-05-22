@@ -1,7 +1,8 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -24,6 +25,7 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/products', require('./routes/products'));
 app.use('/api/ai', require('./routes/ai'));
 app.use('/api/dashboard', require('./routes/dashboard'));
+app.use('/api/notifications', require('./routes/notifications'));
 
 // Health check route
 app.get('/api/health', (req, res) => {

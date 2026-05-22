@@ -1,11 +1,33 @@
 const express = require('express');
 const router = express.Router();
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const Notification = require('../models/Notification');
 const { protect } = require('../middleware/auth');
 
 // Initialize Gemini API
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+
+// Robust helper to generate content with retries and exponential backoff
+const generateContentWithRetry = async (prompt, retries = 3, delay = 1000) => {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      return response;
+    } catch (error) {
+      const errorStr = error.message || '';
+      const isTransient = errorStr.includes('503') || errorStr.includes('429') || errorStr.includes('Service Unavailable') || errorStr.includes('overloaded') || errorStr.includes('quota');
+      if (isTransient && i < retries - 1) {
+        console.warn(`Gemini API call failed (Attempt ${i + 1}/${retries}). Retrying in ${delay}ms... Error: ${errorStr}`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        delay *= 2; // exponential backoff
+      } else {
+        throw error;
+      }
+    }
+  }
+};
 
 // Helper to clean JSON response from Gemini
 const parseJsonArray = (text) => {
@@ -30,6 +52,9 @@ const parseJsonArray = (text) => {
 // @desc    Generate product description
 // @route   POST /api/ai/generate-description
 // @access  Private
+// @desc    Generate product description
+// @route   POST /api/ai/generate-description
+// @access  Private
 router.post('/generate-description', protect, async (req, res) => {
   const { name, category } = req.body;
 
@@ -40,8 +65,7 @@ router.post('/generate-description', protect, async (req, res) => {
   try {
     const prompt = `Generate a compelling, professional, SEO-friendly e-commerce product description for a product named '${name}' in the category '${category}'. Keep it under 150 words. Write only the description, without any titles, markdown formatting, or HTML tags.`;
     
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
+    const response = await generateContentWithRetry(prompt);
     const description = response.text().trim();
 
     res.json({ description });
@@ -64,8 +88,7 @@ router.post('/generate-tags', protect, async (req, res) => {
   try {
     const prompt = `Generate exactly 5 to 8 relevant SEO search tags/keywords for an e-commerce product named '${name}' in the category '${category}'${description ? ` with description: '${description}'` : ''}. Return ONLY a JSON array of strings (e.g. ["tag1", "tag2", "tag3"]). Do not wrap it in markdown code blocks or add any other text.`;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
+    const response = await generateContentWithRetry(prompt);
     const textResponse = response.text();
     
     const tags = parseJsonArray(textResponse);
@@ -89,8 +112,7 @@ router.post('/generate-caption', protect, async (req, res) => {
   try {
     const prompt = `Create an engaging social media/Instagram marketing caption for a product named '${name}' in the category '${category}'${price ? ` priced at $${price}` : ''}. Include relevant emojis and popular hashtags. Keep it catchy, energetic, and ready to post.`;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
+    const response = await generateContentWithRetry(prompt);
     const caption = response.text().trim();
 
     res.json({ caption });
@@ -128,9 +150,15 @@ router.post('/suggestions', protect, async (req, res) => {
       Provide exactly 4-5 bullet points of actionable advice in standard Markdown. Use clear headings and lists. Keep the response concise, encouraging, and business-focused.
     `;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
+    const response = await generateContentWithRetry(prompt);
     const suggestions = response.text().trim();
+
+    // Create notification
+    await Notification.create({
+      user: req.user._id,
+      type: 'info',
+      message: 'New AI strategic suggestions generated for your store.',
+    });
 
     res.json({ suggestions });
   } catch (error) {

@@ -10,7 +10,7 @@
 | **Frontend** | **React** (hooks, context) <br> **Vite** (fast dev server) <br> **Tailwind CSS** (utility‑first styling) <br> **lucide‑react** (icons) | Rapid UI development, hot‑module reloading, and a sleek, responsive design.
 | **Backend** | **Node.js** + **Express** <br> **MongoDB** (Mongoose) <br> **dotenv** (environment variables) <br> **cors** (CORS handling) | Simple REST API, schema‑based data modeling, and easy deployment.
 | **AI Integration** | **@google/generative‑ai** (via `ai.js` route) | Provides AI‑driven suggestions & insights for inventory decisions.
-| **Dev Ops** | **npm scripts** (`npm run dev`) <br> **Git** for version control | Consistent development workflow across frontend and backend.
+
 
 ---
 
@@ -42,31 +42,42 @@
    - Refactored code for readability and consistency.
 
 ---
-
 ## 📈 Project Workflow (Mermaid Flowchart)
 ```mermaid
 flowchart TD
+
     A[Start App] --> B{Load Environment}
-    B -->|Frontend| C[React App (Vite)]
+
+    B -->|Frontend| C[React App - Vite]
     B -->|Backend| D[Express Server]
-    C --> E[Fetch Products] --> F[Display Grid/Table]
+
+    C --> E[Fetch Products]
+    E --> F[Display Grid or Table]
+
     F --> G{User Actions}
-    G -->|Add/Edit/Delete Product| H[POST/PUT/DELETE /api/products]
+
+    G -->|Add Edit Delete Product| H[Product API Requests]
     H --> I[MongoDB Product Collection]
+
     G -->|Sell Product| J[Open Sell Modal]
-    J --> K[User selects quantity]
-    K --> L[POST /api/dashboard/sale]
-    L --> M[Create Sale doc & decrement stock]
-    M --> N[Update Dashboard Stats]
-    N --> O[Revenue Chart & Stats UI]
-    G -->|Delete Sale| P[DELETE /api/dashboard/sale/:id]
-    P --> Q[Remove Sale doc & recalc stats]
+    J --> K[Select Quantity]
+    K --> L[Create Sale API Request]
+
+    L --> M[Create Sale and Update Stock]
+    M --> N[Update Dashboard Statistics]
+    N --> O[Revenue Charts and Analytics]
+
+    G -->|Delete Sale| P[Delete Sale API]
+    P --> Q[Remove Sale and Recalculate Stats]
     Q --> O
-    D --> R[Routes: auth, products, ai, dashboard, notifications]
+
+    D --> R[Backend Routes]
     R --> I
-    I --> S[MongoDB Database]
-    style A fill:#0f62fe,color:#fff
-    style O fill:#24a148,color:#fff
+
+    I --> S[MongoDB Atlas Database]
+
+    style A fill:#0f62fe,color:#ffffff
+    style O fill:#24a148,color:#ffffff
 ```
 
 ---
@@ -93,7 +104,6 @@ cd backend && npm run dev
 # Frontend
 cd frontend && npm run dev
 ```
-The frontend will be available at `http://localhost:5173` and the backend at `http://localhost:5000`.
 
 ---
 
@@ -118,8 +128,6 @@ AI-Inventory/
 ---
 
 ## 📧 Contact & Credits
-Developed by **Ujjwal Singhal** – leveraging Google DeepMind’s *Antigravity* AI assistant for rapid iteration.
-
----
+Developed by **Vanshika Gupta** 
 
 *All UI design follows the premium dark‑mode aesthetic with smooth micro‑animations, ensuring a modern, polished user experience.*
